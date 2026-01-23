@@ -34,10 +34,10 @@ export default function Home() {
         {/* Header Section */}
         <div className="text-center mb-12">
           <h1 className="text-5xl font-black tracking-tighter italic text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-200 mb-2">
-            CS2 SKIN TRADER PRO
+            Skin Trader Market
           </h1>
           <p className="text-gray-400 font-mono text-sm tracking-widest uppercase">
-            CS348 Project <span className="text-orange-500 mx-2">•</span> Developed by Bach Le
+            CS348 Project <span className="text-orange-500 mx-2">•</span>  By Bach Le
           </p>
         </div>
 
@@ -53,44 +53,11 @@ export default function Home() {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-800 skew-x-[-12deg] rounded-sm group-hover:from-blue-500 group-hover:to-blue-700 transition-colors" />
             <span className="relative z-10 drop-shadow-md">
-              {dbStatus === 'loading' ? 'CONNECTING...' : 'CHECK DB CONNECTION'}
+              {dbStatus === 'loading' ? 'CONNECTING...' : 'HELLO WORLD!!'}
             </span>
           </button>
-
-          {/* Status Display Area */}
-          <div className="w-full min-h-[120px] bg-black/40 border border-white/5 rounded p-4 font-mono text-xs">
-            {dbStatus === 'idle' && (
-              <p className="text-gray-500 text-center mt-8">[ SYSTEM READY ] - Awaiting Connection...</p>
-            )}
-            
-            {dbStatus === 'loading' && (
-              <p className="text-blue-400 animate-pulse text-center mt-8">
-                &gt; ESTABLISHING UPLINK TO POSTGRESQL...
-              </p>
-            )}
-
-            {dbStatus === 'success' && (
-              <div className="space-y-2 animate-fade-in">
-                <p className="text-green-500 font-bold">&gt; CONNECTION ESTABLISHED_</p>
-                <p className="text-gray-300 break-words">
-                  <span className="text-orange-400">SERVER RESPONSE:</span> {version}
-                </p>
-              </div>
-            )}
-
-            {dbStatus === 'error' && (
-              <p className="text-red-500 text-center mt-8">
-                [ ERROR ] CONNECTION FAILED. CHECK DOCKER STATUS.
-              </p>
-            )}
-          </div>
         </div>
       </div>
-
-      {/* Footer / Credits */}
-      <footer className="absolute bottom-4 text-xs text-gray-600 font-mono">
-        NEXT.JS APP ROUTER // POSTGRESQL // TAILWIND CSS
-      </footer>
     </main>
   );
 }

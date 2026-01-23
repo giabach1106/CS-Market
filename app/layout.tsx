@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'CS2 Skin Trader Pro',
-  description: 'CS348 Project - Database-backed application',
+  title: 'Skin Trader Market',
+  description: 'CS348 Project',
 }
 
 export default function RootLayout({
