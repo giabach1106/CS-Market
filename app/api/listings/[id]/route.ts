@@ -38,12 +38,27 @@ function parseId(value: string) {
   return parsed;
 }
 
+function resolveListingId(request: Request, rawParamId?: string) {
+  const fromParams = rawParamId ? parseId(rawParamId) : null;
+  if (fromParams) {
+    return fromParams;
+  }
+
+  const pathname = new URL(request.url).pathname;
+  const fallback = pathname.split('/').pop();
+  if (!fallback) {
+    return null;
+  }
+
+  return parseId(fallback);
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const listingId = parseId(params.id);
+    const listingId = resolveListingId(request, params?.id);
     if (!listingId) {
       return NextResponse.json({ error: 'Invalid listing id.' }, { status: 400 });
     }
@@ -105,11 +120,11 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const listingId = parseId(params.id);
+    const listingId = resolveListingId(request, params?.id);
     if (!listingId) {
       return NextResponse.json({ error: 'Invalid listing id.' }, { status: 400 });
     }
