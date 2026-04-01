@@ -1,64 +1,95 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 
 export default function Home() {
   const [dbStatus, setDbStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [version, setVersion] = useState<string>('');
+  const [dbVersion, setDbVersion] = useState('');
 
-  const checkConnection = async () => {
+  const checkDatabase = async () => {
     setDbStatus('loading');
     try {
-      const res = await fetch('/api/health');
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        setVersion(data.version);
-        setDbStatus('success');
-      } else {
-        setDbStatus('error');
+      const response = await fetch('/api/health');
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error('Health check failed.');
       }
-    } catch (err) {
+      setDbVersion(data.version || '');
+      setDbStatus('success');
+    } catch (error) {
+      console.error(error);
       setDbStatus('error');
     }
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-[#1b1b1b] text-white p-6 relative overflow-hidden">
-      {/* Background Gradient Effect (CS2 Smoke/Blue vibe) */}
-      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-900/20 to-orange-900/10 pointer-events-none" />
-
-      {/* Main Card */}
-      <div className="z-10 w-full max-w-2xl bg-[#0d0d0d]/80 backdrop-blur-md border border-white/10 p-10 rounded-lg shadow-2xl">
-        
-        {/* Header Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-black tracking-tighter italic text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-200 mb-2">
-            Skin Trader Market
+    <main className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 sm:px-8">
+        <header className="rounded-xl border border-slate-800 bg-slate-900/60 p-6">
+          <p className="text-sm uppercase tracking-[0.2em] text-cyan-300">CS348 Stage 2</p>
+          <h1 className="mt-2 text-3xl font-bold text-white sm:text-4xl">
+            Student Ebook Exchange Marketplace
           </h1>
-          <p className="text-gray-400 font-mono text-sm tracking-widest uppercase">
-            CS348 Project <span className="text-orange-500 mx-2">•</span>  By Bach Le
+          <p className="mt-3 max-w-3xl text-sm text-slate-300 sm:text-base">
+            Raw SQL + PostgreSQL + Next.js implementation with one CRUD main table (
+            <span className="font-semibold text-cyan-200">listings</span>) and one report
+            interface (
+            <span className="font-semibold text-cyan-200">available listings</span>).
           </p>
-        </div>
+        </header>
 
-        {/* Action Section */}
-        <div className="flex flex-col items-center space-y-6">
-          <button
-            onClick={checkConnection}
-            disabled={dbStatus === 'loading'}
-            className={`
-              group relative px-8 py-4 font-bold uppercase tracking-widest text-sm transition-all duration-300
-              ${dbStatus === 'loading' ? 'opacity-70 cursor-not-allowed' : 'hover:scale-105 active:scale-95'}
-            `}
+        <section className="grid gap-4 sm:grid-cols-2">
+          <Link
+            href="/listings"
+            className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-cyan-400 hover:bg-slate-900"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-800 skew-x-[-12deg] rounded-sm group-hover:from-blue-500 group-hover:to-blue-700 transition-colors" />
-            <span className="relative z-10 drop-shadow-md">
-              {dbStatus === 'loading' ? 'CONNECTING...' : 'HELLO WORLD!!'}
-            </span>
-          </button>
-        </div>
+            <h2 className="text-xl font-semibold text-cyan-200">Requirement 1: Listings CRUD</h2>
+            <p className="mt-2 text-sm text-slate-300">
+              Create, edit, and delete listings. Form dropdowns load students, courses, and ebooks
+              dynamically from the database.
+            </p>
+          </Link>
+
+          <Link
+            href="/report"
+            className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-cyan-400 hover:bg-slate-900"
+          >
+            <h2 className="text-xl font-semibold text-cyan-200">
+              Requirement 2: Available Listings Report
+            </h2>
+            <p className="mt-2 text-sm text-slate-300">
+              Filter active listings by course, trade type, condition, price range, and posted date
+              range, then view aggregate statistics.
+            </p>
+          </Link>
+        </section>
+
+        <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-6">
+          <h2 className="text-lg font-semibold text-white">System Check</h2>
+          <p className="mt-1 text-sm text-slate-300">
+            Use this button to verify live PostgreSQL connectivity before recording your demo.
+          </p>
+
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              onClick={checkDatabase}
+              disabled={dbStatus === 'loading'}
+              className="rounded-md bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {dbStatus === 'loading' ? 'Checking...' : 'Check DB Connection'}
+            </button>
+
+            {dbStatus === 'success' && (
+              <p className="text-sm text-emerald-300">Connected: {dbVersion}</p>
+            )}
+            {dbStatus === 'error' && (
+              <p className="text-sm text-rose-300">Connection failed. Verify docker-compose and DB init.</p>
+            )}
+          </div>
+        </section>
       </div>
     </main>
   );
 }
-
