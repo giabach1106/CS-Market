@@ -1,7 +1,8 @@
 # CS348 Semester Project: Student Ebook Exchange Marketplace
 
-**Live Demo:** [Your deployed URL here]  
-**GitHub:** [Your repository URL here]
+A database-backed web application for exchanging ebooks between students. Built with Next.js, TypeScript, and PostgreSQL using raw SQL queries.
+
+**Live Demo:** https://cs348.kiroz.xyz
 
 ---
 
@@ -13,7 +14,7 @@ This marketplace allows students to list, sell, or swap textbooks for their cour
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | Next.js 14, React 18, TypeScript, Tailwind CSS |
+| Frontend | Next.js 16, React 18, TypeScript, Tailwind CSS |
 | Backend | Next.js API Routes, Raw SQL |
 | Database | PostgreSQL 16 |
 | Deployment | AWS EC2, RDS PostgreSQL |
@@ -22,41 +23,32 @@ This marketplace allows students to list, sell, or swap textbooks for their cour
 
 ## Features
 
-### Stage 2 Requirements
-
-**Requirement 1 - CRUD Operations (`/listings`)**
+**Listings Management (`/listings`)**
 - Create, update, and delete listings
 - Dynamic dropdowns populated from database (students, courses, ebooks)
 - Input validation with business rules (SWAP = no price, SELL/BOTH = price > 0)
 
-**Requirement 2 - Report Interface (`/report`)**
+**Browse & Report (`/report`)**
 - Filter active listings by: course, trade type, condition, price range, date range
 - Real-time aggregate statistics (total count, average price, type breakdown)
 - Results update immediately when data changes
 
-### Stage 3 Requirements
-
 **SQL Injection Protection**
 - All queries use parameterized statements (`$1`, `$2`, etc.)
 - Input validation layer before database operations
-- See: `lib/db.ts`, `app/api/listings/route.ts`
 
 **Database Indexes**
-- 7 strategically placed indexes with documented justifications
-- Optimizes: report filtering, sorting, joins, price range queries
-- See: `db/schema.sql` (lines 60-110)
+- 7 indexes optimized for report filtering, sorting, joins, price range queries
 
-**Transactions & Isolation Levels**
-- CRUD operations wrapped in transactions
-- Uses READ COMMITTED isolation (PostgreSQL default)
+**Transactions**
+- CRUD operations wrapped in transactions with READ COMMITTED isolation
 - Atomic operations with automatic rollback on failure
-- See: `lib/db.ts` (withTransaction function)
 
 ---
 
 ## Database Design
 
-### Entity-Relationship Summary
+### Entity-Relationship
 
 ```
 courses (1) ──── (N) ebooks (1) ──── (N) listings (N) ──── (1) students
@@ -71,32 +63,32 @@ courses (1) ──── (N) ebooks (1) ──── (N) listings (N) ───�
 | `ebooks` | `ebook_id` | Books linked to courses |
 | `listings` | `listing_id` | Main CRUD table - items for sale/swap |
 
-### Indexes and Their Purpose
+### Indexes
 
-| Index | Columns | Supports |
-|-------|---------|----------|
-| `idx_listings_status_posted_at` | (status, posted_at DESC) | Report filtering + sorting |
-| `idx_listings_trade_type` | trade_type | Trade type filter + aggregates |
-| `idx_listings_book_condition` | book_condition | Condition filter |
-| `idx_listings_price` | price (WHERE NOT NULL) | Price range queries |
-| `idx_ebooks_course_id` | course_id | Course filter joins |
-| `idx_listings_seller_student_id` | seller_student_id | Seller info joins |
-| `idx_listings_ebook_id` | ebook_id | Ebook info joins |
+| Index | Supports |
+|-------|----------|
+| `idx_listings_status_posted_at` | Report filtering + sorting |
+| `idx_listings_trade_type` | Trade type filter + aggregates |
+| `idx_listings_book_condition` | Condition filter |
+| `idx_listings_price` | Price range queries |
+| `idx_ebooks_course_id` | Course filter joins |
+| `idx_listings_seller_student_id` | Seller info joins |
+| `idx_listings_ebook_id` | Ebook info joins |
 
 ---
 
 ## API Endpoints
 
-### Meta Endpoints (Dynamic UI)
+### Meta Endpoints
 - `GET /api/meta/students` - All students for dropdown
 - `GET /api/meta/courses` - All courses for dropdown
 - `GET /api/meta/ebooks?courseId=` - Ebooks filtered by course
 
 ### Listings CRUD
 - `GET /api/listings` - List all listings
-- `POST /api/listings` - Create listing (with transaction)
-- `PUT /api/listings/{id}` - Update listing (with transaction)
-- `DELETE /api/listings/{id}` - Delete listing (with transaction)
+- `POST /api/listings` - Create listing
+- `PUT /api/listings/{id}` - Update listing
+- `DELETE /api/listings/{id}` - Delete listing
 
 ### Report
 - `GET /api/reports/available-listings?filters...` - Filtered report with stats
@@ -104,13 +96,6 @@ courses (1) ──── (N) ebooks (1) ──── (N) listings (N) ───�
 ---
 
 ## Local Development
-
-### Prerequisites
-- Node.js 20+
-- Docker and Docker Compose
-- Git
-
-### Setup
 
 ```bash
 # Clone repository
@@ -130,15 +115,14 @@ npm run db:init
 npm run dev
 ```
 
-### Access
-
+Access:
 - Home: http://localhost:3000
-- Listings CRUD: http://localhost:3000/listings
-- Report: http://localhost:3000/report
+- Manage Listings: http://localhost:3000/listings
+- Browse: http://localhost:3000/report
 
 ---
 
-## AWS Deployment (Extra Credit)
+## AWS Deployment
 
 The application is deployed to AWS using:
 - **EC2** (t3.micro) - Runs Next.js application
@@ -152,56 +136,44 @@ See `AWS_DEPLOYMENT.md` for detailed deployment instructions.
 ## AI Usage
 
 ### Tools Used
-- **Cursor IDE with Claude** - AI-powered code editor
+- **Cursor IDE with Claude**
 
 ### Tasks AI Assisted With
 
-1. **Code Generation & Scaffolding**
+1. **Project Scaffolding**
    - Generated initial Next.js project structure
-   - Created TypeScript interfaces for type safety
+   - Created TypeScript interfaces
    - Wrote boilerplate for API routes
 
-2. **SQL Query Construction**
-   - Helped write complex JOIN queries for report
-   - Suggested index creation syntax
-   - Assisted with transaction wrapper implementation
+2. **Mock Data Generation**
+   - Generated realistic sample data for courses (CS180, CS251, CS348, etc.)
+   - Created student profiles with Purdue email format
+   - Generated ebook entries with real textbook titles, authors, and ISBNs
+   - Created diverse listing entries with varying conditions, prices, and trade types
 
-3. **Documentation**
-   - Generated inline code comments explaining concepts
-   - Created README structure and deployment guide
-   - Wrote demo script outline
-
-4. **Debugging & Troubleshooting**
+3. **Debugging**
    - Diagnosed foreign key constraint errors
    - Fixed TypeScript type mismatches
-   - Resolved async/await issues in transaction handling
+   - Resolved Next.js 16 async params breaking change
 
 ### How I Verified and Modified AI Output
 
 1. **Code Review**
-   - Manually reviewed all generated code for correctness
-   - Verified SQL syntax against PostgreSQL documentation
-   - Tested each CRUD operation manually
+   - Manually reviewed all generated code
+   - Tested each CRUD operation
+   - Verified database constraints work correctly
 
 2. **Testing**
-   - Ran the application locally and tested all features
-   - Verified database constraints work as expected
+   - Ran application locally and on AWS
    - Confirmed report filters produce correct results
+   - Verified statistics update after data changes
 
-3. **Modifications Made**
-   - Adjusted generated queries to match exact table/column names
-   - Modified transaction isolation levels based on course material
-   - Rewrote some validation logic for edge cases
-   - Updated styling to match project design
-
-4. **Learning Verification**
-   - Cross-referenced AI suggestions with course lecture slides
-   - Confirmed index choices align with B+ tree theory from class
+3. **Learning Verification**
+   - Cross-referenced with course lecture slides
+   - Confirmed index choices align with B+ tree theory
    - Verified isolation level choice matches course concepts
 
-### Conclusion
-
-AI tools accelerated development of boilerplate code and documentation, but all database concepts (indexes, transactions, SQL injection protection) were implemented based on understanding from CS348 lectures. Every line of code was reviewed, tested, and modified as needed to ensure correctness and alignment with course requirements.
+AI tools accelerated development of boilerplate code and test data, but all database concepts (indexes, transactions, SQL injection protection) were implemented based on understanding from CS348 lectures.
 
 ---
 
@@ -211,37 +183,27 @@ AI tools accelerated development of boilerplate code and documentation, but all 
 CS-Market/
 ├── app/
 │   ├── api/
-│   │   ├── health/route.ts        # DB connection check
+│   │   ├── health/route.ts
 │   │   ├── listings/
-│   │   │   ├── route.ts           # GET/POST listings
-│   │   │   └── [id]/route.ts      # PUT/DELETE listing
+│   │   │   ├── route.ts
+│   │   │   └── [id]/route.ts
 │   │   ├── meta/
-│   │   │   ├── courses/route.ts   # Dynamic dropdown data
+│   │   │   ├── courses/route.ts
 │   │   │   ├── ebooks/route.ts
 │   │   │   └── students/route.ts
 │   │   └── reports/
 │   │       └── available-listings/route.ts
-│   ├── listings/page.tsx          # CRUD interface
-│   ├── report/page.tsx            # Report interface
-│   ├── page.tsx                   # Home page
+│   ├── listings/page.tsx
+│   ├── report/page.tsx
+│   ├── page.tsx
 │   └── layout.tsx
 ├── db/
-│   ├── schema.sql                 # Tables + indexes
-│   └── seed.sql                   # Sample data
+│   ├── schema.sql
+│   └── seed.sql
 ├── lib/
-│   ├── db.ts                      # DB connection + transactions
-│   ├── listingValidation.ts       # Input validation
-│   └── types.ts                   # TypeScript interfaces
-├── scripts/
-│   └── init-db.js                 # DB initialization script
-├── AWS_DEPLOYMENT.md              # Cloud deployment guide
-├── docker-compose.yml             # Local PostgreSQL
+│   ├── db.ts
+│   ├── listingValidation.ts
+│   └── types.ts
+├── docker-compose.yml
 └── README.md
 ```
-
----
-
-## License
-
-This project was created for CS348 (Information Systems) at Purdue University.
-For educational purposes only.
