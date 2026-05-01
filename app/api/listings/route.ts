@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { query, withTransaction } from '@/lib/db';
 import { parseListingInput } from '@/lib/listingValidation';
 
 export const dynamic = 'force-dynamic';
@@ -46,43 +46,50 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    
     const { data, error } = parseListingInput(body);
-
     if (!data) {
       return NextResponse.json({ error }, { status: 400 });
     }
 
-    const insertResult = await query(
-      `INSERT INTO listings (
-         ebook_id,
-         seller_student_id,
-         trade_type,
-         book_condition,
-         price,
-         status,
-         note
-       )
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING listing_id`,
-      [
-        data.ebookId,
-        data.sellerStudentId,
-        data.tradeType,
-        data.bookCondition,
-        data.price,
-        data.status,
-        data.note,
-      ]
-    );
+    // transaction ensures atomic insert + fetch
+    const listing = await withTransaction(async (client) => {
+      // parameterized query prevents sql injection
+      const insertResult = await client.query(
+        `INSERT INTO listings (
+           ebook_id,
+           seller_student_id,
+           trade_type,
+           book_condition,
+           price,
+           status,
+           note
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING listing_id`,
+        [
+          data.ebookId,
+          data.sellerStudentId,
+          data.tradeType,
+          data.bookCondition,
+          data.price,
+          data.status,
+          data.note,
+        ]
+      );
 
-    const listingId = insertResult.rows[0]?.listing_id;
-    const listingResult = await query(
-      `${LISTING_SELECT_SQL}
-       WHERE l.listing_id = $1`,
-      [listingId]
-    );
+      const listingId = insertResult.rows[0]?.listing_id;
 
-    return NextResponse.json({ listing: listingResult.rows[0] }, { status: 201 });
+      const listingResult = await client.query(
+        `${LISTING_SELECT_SQL}
+         WHERE l.listing_id = $1`,
+        [listingId]
+      );
+
+      return listingResult.rows[0];
+    });
+
+    return NextResponse.json({ listing }, { status: 201 });
   } catch (error: any) {
     console.error('Failed to create listing:', error);
 

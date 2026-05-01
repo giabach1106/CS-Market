@@ -256,10 +256,7 @@ export default function ListingsPage() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-8">
         <header className="rounded-xl border border-slate-800 bg-slate-900/60 p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-sm uppercase tracking-[0.2em] text-cyan-300">Requirement 1</p>
-              <h1 className="text-3xl font-bold text-white">Manage Listings (CRUD)</h1>
-            </div>
+            <h1 className="text-3xl font-bold text-white">Manage Listings</h1>
             <div className="flex gap-2">
               <Link
                 href="/"
@@ -271,13 +268,10 @@ export default function ListingsPage() {
                 href="/report"
                 className="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-200 transition hover:border-cyan-400"
               >
-                Report
+                Browse
               </Link>
             </div>
           </div>
-          <p className="mt-3 text-sm text-slate-300">
-            Students, courses, and ebooks in these dropdowns are loaded dynamically from PostgreSQL.
-          </p>
         </header>
 
         {(errorMessage || successMessage) && (

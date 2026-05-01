@@ -4,7 +4,8 @@
 /node_modules
 /.pnp
 .pnp.js
-
+.cursor
+AWS_DEPLOYMENT.md
 # testing
 /coverage
 
@@ -34,4 +35,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# demo scripts (local only)
+Script.md
+Stage3Script.md
+*Script*.md
 

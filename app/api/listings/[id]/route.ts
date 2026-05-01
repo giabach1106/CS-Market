@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { query, withTransaction } from '@/lib/db';
 import { parseListingInput } from '@/lib/listingValidation';
 
 export const dynamic = 'force-dynamic';
@@ -30,7 +30,7 @@ JOIN ebooks e ON e.ebook_id = l.ebook_id
 JOIN courses c ON c.course_id = e.course_id
 JOIN students s ON s.student_id = l.seller_student_id`;
 
-function parseId(value: string) {
+function parseId(value: string): number | null {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed <= 0) {
     return null;
@@ -38,7 +38,7 @@ function parseId(value: string) {
   return parsed;
 }
 
-function resolveListingId(request: Request, rawParamId?: string) {
+function resolveListingId(request: Request, rawParamId?: string): number | null {
   const fromParams = rawParamId ? parseId(rawParamId) : null;
   if (fromParams) {
     return fromParams;
@@ -55,10 +55,11 @@ function resolveListingId(request: Request, rawParamId?: string) {
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const listingId = resolveListingId(request, params?.id);
+    const { id } = await params;
+    const listingId = resolveListingId(request, id);
     if (!listingId) {
       return NextResponse.json({ error: 'Invalid listing id.' }, { status: 400 });
     }
@@ -69,44 +70,53 @@ export async function PUT(
       return NextResponse.json({ error }, { status: 400 });
     }
 
-    const updateResult = await query(
-      `UPDATE listings
-       SET
-         ebook_id = $1,
-         seller_student_id = $2,
-         trade_type = $3,
-         book_condition = $4,
-         price = $5,
-         status = $6,
-         note = $7,
-         updated_at = NOW()
-       WHERE listing_id = $8
-       RETURNING listing_id`,
-      [
-        data.ebookId,
-        data.sellerStudentId,
-        data.tradeType,
-        data.bookCondition,
-        data.price,
-        data.status,
-        data.note,
-        listingId,
-      ]
-    );
+    const result = await withTransaction(async (client) => {
+      // parameterized update
+      const updateResult = await client.query(
+        `UPDATE listings
+         SET
+           ebook_id = $1,
+           seller_student_id = $2,
+           trade_type = $3,
+           book_condition = $4,
+           price = $5,
+           status = $6,
+           note = $7,
+           updated_at = NOW()
+         WHERE listing_id = $8
+         RETURNING listing_id`,
+        [
+          data.ebookId,
+          data.sellerStudentId,
+          data.tradeType,
+          data.bookCondition,
+          data.price,
+          data.status,
+          data.note,
+          listingId,
+        ]
+      );
 
-    if (updateResult.rowCount === 0) {
-      return NextResponse.json({ error: 'Listing not found.' }, { status: 404 });
-    }
+      if (updateResult.rowCount === 0) {
+        throw new Error('NOT_FOUND');
+      }
 
-    const listingResult = await query(
-      `${LISTING_SELECT_SQL}
-       WHERE l.listing_id = $1`,
-      [listingId]
-    );
+      const listingResult = await client.query(
+        `${LISTING_SELECT_SQL}
+         WHERE l.listing_id = $1`,
+        [listingId]
+      );
 
-    return NextResponse.json({ listing: listingResult.rows[0] });
+      return listingResult.rows[0];
+    });
+
+    return NextResponse.json({ listing: result });
   } catch (error: any) {
     console.error('Failed to update listing:', error);
+
+    if (error?.message === 'NOT_FOUND') {
+      return NextResponse.json({ error: 'Listing not found.' }, { status: 404 });
+    }
 
     if (error?.code === '23503') {
       return NextResponse.json(
@@ -121,22 +131,36 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const listingId = resolveListingId(request, params?.id);
+    const { id } = await params;
+    const listingId = resolveListingId(request, id);
     if (!listingId) {
       return NextResponse.json({ error: 'Invalid listing id.' }, { status: 400 });
     }
 
-    const result = await query(`DELETE FROM listings WHERE listing_id = $1`, [listingId]);
-    if (result.rowCount === 0) {
+    const success = await withTransaction(async (client) => {
+      const result = await client.query(
+        `DELETE FROM listings WHERE listing_id = $1`,
+        [listingId]
+      );
+      
+      if (result.rowCount === 0) {
+        throw new Error('NOT_FOUND');
+      }
+      
+      return true;
+    });
+
+    return NextResponse.json({ success });
+  } catch (error: any) {
+    console.error('Failed to delete listing:', error);
+    
+    if (error?.message === 'NOT_FOUND') {
       return NextResponse.json({ error: 'Listing not found.' }, { status: 404 });
     }
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Failed to delete listing:', error);
+    
     return NextResponse.json({ error: 'Failed to delete listing.' }, { status: 500 });
   }
 }

@@ -44,9 +44,27 @@ CREATE TABLE listings (
   )
 );
 
+-- indexes
+
+-- report: WHERE status='ACTIVE' ORDER BY posted_at DESC
 CREATE INDEX idx_listings_status_posted_at ON listings(status, posted_at DESC);
+
+-- report: filter by trade_type, aggregate stats
 CREATE INDEX idx_listings_trade_type ON listings(trade_type);
+
+-- report: filter by course (join optimization)
 CREATE INDEX idx_ebooks_course_id ON ebooks(course_id);
+
+-- listing display: join with students table
 CREATE INDEX idx_listings_seller_student_id ON listings(seller_student_id);
+
+-- report: price range filter (partial index, excludes null)
+CREATE INDEX idx_listings_price ON listings(price) WHERE price IS NOT NULL;
+
+-- report: filter by condition
+CREATE INDEX idx_listings_book_condition ON listings(book_condition);
+
+-- listing display: join with ebooks table
+CREATE INDEX idx_listings_ebook_id ON listings(ebook_id);
 
 COMMIT;
