@@ -4,12 +4,6 @@ A database-backed web application for exchanging ebooks between students. Built 
 
 **Live Demo:** https://cs348.kiroz.xyz
 
----
-
-## Project Overview
-
-This marketplace allows students to list, sell, or swap textbooks for their courses. The application demonstrates core database concepts including CRUD operations, dynamic reporting with filtering, SQL injection protection, database indexing, and transaction management.
-
 ### Tech Stack
 
 | Layer | Technology |
@@ -95,43 +89,12 @@ courses (1) ──── (N) ebooks (1) ──── (N) listings (N) ───�
 
 ---
 
-## Local Development
-
 ```bash
-# Clone repository
-git clone https://github.com/YOUR_USERNAME/CS-Market.git
-cd CS-Market
-
-# Install dependencies
 npm install
-
-# Start PostgreSQL container
 docker compose up -d
-
-# Initialize database (schema + seed data)
 npm run db:init
-
-# Start development server
 npm run dev
 ```
-
-Access:
-- Home: http://localhost:3000
-- Manage Listings: http://localhost:3000/listings
-- Browse: http://localhost:3000/report
-
----
-
-## AWS Deployment
-
-The application is deployed to AWS using:
-- **EC2** (t3.micro) - Runs Next.js application
-- **RDS PostgreSQL** (db.t3.micro) - Managed database
-- **Custom domain** via Namecheap DNS
-
-See `AWS_DEPLOYMENT.md` for detailed deployment instructions.
-
----
 
 ## AI Usage
 
@@ -147,14 +110,12 @@ See `AWS_DEPLOYMENT.md` for detailed deployment instructions.
 
 2. **Mock Data Generation**
    - Generated realistic sample data for courses (CS180, CS251, CS348, etc.)
-   - Created student profiles with Purdue email format
    - Generated ebook entries with real textbook titles, authors, and ISBNs
    - Created diverse listing entries with varying conditions, prices, and trade types
 
 3. **Debugging**
    - Diagnosed foreign key constraint errors
    - Fixed TypeScript type mismatches
-   - Resolved Next.js 16 async params breaking change
 
 ### How I Verified and Modified AI Output
 
@@ -173,37 +134,4 @@ See `AWS_DEPLOYMENT.md` for detailed deployment instructions.
    - Confirmed index choices align with B+ tree theory
    - Verified isolation level choice matches course concepts
 
-AI tools accelerated development of boilerplate code and test data, but all database concepts (indexes, transactions, SQL injection protection) were implemented based on understanding from CS348 lectures.
-
 ---
-
-## Project Structure
-
-```
-CS-Market/
-├── app/
-│   ├── api/
-│   │   ├── health/route.ts
-│   │   ├── listings/
-│   │   │   ├── route.ts
-│   │   │   └── [id]/route.ts
-│   │   ├── meta/
-│   │   │   ├── courses/route.ts
-│   │   │   ├── ebooks/route.ts
-│   │   │   └── students/route.ts
-│   │   └── reports/
-│   │       └── available-listings/route.ts
-│   ├── listings/page.tsx
-│   ├── report/page.tsx
-│   ├── page.tsx
-│   └── layout.tsx
-├── db/
-│   ├── schema.sql
-│   └── seed.sql
-├── lib/
-│   ├── db.ts
-│   ├── listingValidation.ts
-│   └── types.ts
-├── docker-compose.yml
-└── README.md
-```
